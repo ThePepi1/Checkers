@@ -1,5 +1,10 @@
+import next_move
 import pygame
-
+import figures
+def Outside(x, y):
+    if x < 0 or x >= 8 or y < 0 or y >= 8:
+        return True
+    return False
 
 class Que:
     def __init__(self):
@@ -28,8 +33,9 @@ pygame.display.set_caption("Checkers Game")
 def all_posible_moves(selected_checker, checkers):
     moves = []
     if selected_checker:
-        color, row, col = selected_checker
-        if color[1] == "UP":
+        color, row, col = selected_checker.color, selected_checker.row, selected_checker.col
+        movment = selected_checker.movment
+        if movment == "UP":
                 # Check if the move is diagonal and forward
             if (row - 1, col - 1) not in checkers:
                 moves.append(((row - 1, col - 1),None))
@@ -41,13 +47,15 @@ def all_posible_moves(selected_checker, checkers):
             while(not que.is_empty()):
                 cord, eaten = que.dequeue()
                 start_row, start_col = cord      
-                if (start_row - 2, start_col - 2) not in checkers and (start_row - 1, start_col - 1) in checkers and checkers[(start_row - 1, start_col - 1)][0] != color[0]:
-                    moves.append(((start_row - 2, start_col - 2),eaten + [(start_row - 1, start_col - 1)]))
-                    que.append(((start_row - 2, start_col - 2),eaten + [(start_row - 1, start_col - 1)]))
-                if (start_row - 2, start_col + 2) not in checkers and (start_row - 1, start_col + 1) in checkers and checkers[(start_row - 1, start_col + 1)][0] != color[0]:
-                    moves.append(((start_row - 2, start_col + 2), eaten + [(start_row - 1, start_col + 1)]))
-                    que.append(((start_row - 2, start_col + 2), eaten + [(start_row - 1, start_col + 1)]))
-        elif color[1] == "Dawn":
+                if (start_row - 2, start_col - 2) not in checkers and (start_row - 1, start_col - 1) in checkers and checkers[(start_row - 1, start_col - 1)].color != color:
+                    if not Outside(start_row - 2, start_col - 2):
+                        moves.append(((start_row - 2, start_col - 2),eaten + [(start_row - 1, start_col - 1)]))
+                        que.append(((start_row - 2, start_col - 2),eaten + [(start_row - 1, start_col - 1)]))
+                if (start_row - 2, start_col + 2) not in checkers and (start_row - 1, start_col + 1) in checkers and checkers[(start_row - 1, start_col + 1)].color != color:
+                    if not Outside(start_row - 2, start_col + 2):
+                        moves.append(((start_row - 2, start_col + 2), eaten + [(start_row - 1, start_col + 1)]))
+                        que.append(((start_row - 2, start_col + 2), eaten + [(start_row - 1, start_col + 1)]))
+        elif movment == "Dawn":
                 # Check if the move is diagonal and forward
             if (row + 1, col - 1) not in checkers:
                 moves.append(((row + 1, col - 1),None))
@@ -59,13 +67,15 @@ def all_posible_moves(selected_checker, checkers):
             while(not que.is_empty()):
                 cord, eaten = que.dequeue()
                 start_row, start_col = cord
-                if (start_row + 2, start_col - 2) not in checkers and (start_row + 1, start_col - 1) in checkers and checkers[(start_row + 1, start_col - 1)][0] != color[0]:
-                    moves.append(((start_row + 2, start_col - 2), eaten + [(start_row + 1, start_col - 1)]))
-                    que.append(((start_row + 2, start_col - 2), eaten + [(start_row + 1, start_col - 1)]))
-                if (start_row + 2, start_col + 2) not in checkers and (start_row + 1, start_col + 1) in checkers and checkers[(start_row + 1, start_col + 1)][0] != color[0]:
-                    moves.append(((start_row + 2, start_col + 2), eaten + [(start_row + 1, start_col + 1)]))
-                    que.append(((start_row + 2, start_col + 2), eaten + [(start_row + 1, start_col + 1)]))
-        elif color[1] == "KING":
+                if (start_row + 2, start_col - 2) not in checkers and (start_row + 1, start_col - 1) in checkers and checkers[(start_row + 1, start_col - 1)].color != color:
+                    if not Outside(start_row + 2, start_col - 2):
+                        moves.append(((start_row + 2, start_col - 2), eaten + [(start_row + 1, start_col - 1)]))
+                        que.append(((start_row + 2, start_col - 2), eaten + [(start_row + 1, start_col - 1)]))
+                if (start_row + 2, start_col + 2) not in checkers and (start_row + 1, start_col + 1) in checkers and checkers[(start_row + 1, start_col + 1)].color != color:
+                    if not Outside(start_row + 2, start_col + 2):
+                        moves.append(((start_row + 2, start_col + 2), eaten + [(start_row + 1, start_col + 1)]))
+                        que.append(((start_row + 2, start_col + 2), eaten + [(start_row + 1, start_col + 1)]))
+        elif movment == "KING":
             if (row - 1, col - 1) not in checkers:
                 moves.append(((row - 1, col - 1),None))
             if (row - 1, col + 1) not in checkers:
@@ -83,26 +93,32 @@ def all_posible_moves(selected_checker, checkers):
                 cord, eaten = que.dequeue()
                 start_row, start_col = cord                     
                 been_to[(start_row, start_col)] = True
-                if (start_row - 2, start_col - 2) not in checkers and (start_row - 1, start_col - 1) in checkers and checkers[(start_row - 1, start_col - 1)][0] != color[0]:
+                if (start_row - 2, start_col - 2) not in checkers and (start_row - 1, start_col - 1) in checkers and checkers[(start_row - 1, start_col - 1)].color != color:
                     if not been_to.get((start_row - 2, start_col - 2)):
-                        moves.append(((start_row - 2, start_col - 2),eaten + [(start_row - 1, start_col - 1)]))
-                        que.append(((start_row - 2, start_col - 2),eaten + [(start_row - 1, start_col - 1)]))
-                if (start_row - 2, start_col + 2) not in checkers and (start_row - 1, start_col + 1) in checkers and checkers[(start_row - 1, start_col + 1)][0] != color[0]:
+                        if not Outside(start_row - 2, start_col - 2):
+                            moves.append(((start_row - 2, start_col - 2),eaten + [(start_row - 1, start_col - 1)]))
+                            que.append(((start_row - 2, start_col - 2),eaten + [(start_row - 1, start_col - 1)]))
+                if (start_row - 2, start_col + 2) not in checkers and (start_row - 1, start_col + 1) in checkers and checkers[(start_row - 1, start_col + 1)].color != color:
                     if not been_to.get((start_row - 2, start_col + 2)):
-                        moves.append(((start_row - 2, start_col + 2), eaten + [(start_row - 1, start_col + 1)]))
-                        que.append(((start_row - 2, start_col + 2), eaten + [(start_row - 1, start_col + 1)]))
-                if (start_row + 2, start_col - 2) not in checkers and (start_row + 1, start_col - 1) in checkers and checkers[(start_row + 1, start_col - 1)][0] != color[0]:
+                        if not Outside(start_row - 2, start_col + 2):
+                            moves.append(((start_row - 2, start_col + 2), eaten + [(start_row - 1, start_col + 1)]))
+                            que.append(((start_row - 2, start_col + 2), eaten + [(start_row - 1, start_col + 1)]))
+                if (start_row + 2, start_col - 2) not in checkers and (start_row + 1, start_col - 1) in checkers and checkers[(start_row + 1, start_col - 1)].color != color:
                     if not been_to.get((start_row + 2, start_col - 2)):
-                        moves.append(((start_row + 2, start_col - 2), eaten + [(start_row + 1, start_col - 1)]))
-                        que.append(((start_row + 2, start_col - 2), eaten + [(start_row + 1, start_col - 1)]))
-                if (start_row + 2, start_col + 2) not in checkers and (start_row + 1, start_col + 1) in checkers and checkers[(start_row + 1, start_col + 1)][0] != color[0]:
+                        if not Outside(start_row + 2, start_col - 2):
+                            moves.append(((start_row + 2, start_col - 2), eaten + [(start_row + 1, start_col - 1)]))
+                            que.append(((start_row + 2, start_col - 2), eaten + [(start_row + 1, start_col - 1)]))
+                if (start_row + 2, start_col + 2) not in checkers and (start_row + 1, start_col + 1) in checkers and checkers[(start_row + 1, start_col + 1)].color != color:
                     if not been_to.get((start_row + 2, start_col + 2)):    
-                        moves.append(((start_row + 2, start_col + 2), eaten + [(start_row + 1, start_col + 1)]))
-                        que.append(((start_row + 2, start_col + 2), eaten + [(start_row + 1, start_col + 1)]))
+                        if not Outside(start_row + 2, start_col + 2):
+                            moves.append(((start_row + 2, start_col + 2), eaten + [(start_row + 1, start_col + 1)]))
+                            que.append(((start_row + 2, start_col + 2), eaten + [(start_row + 1, start_col + 1)]))
     return moves
 
 
 # Define colors
+yellow = (128, 128, 000)
+Purple = (128, 0, 128)
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 RED = (255, 0, 0)
@@ -119,11 +135,12 @@ for row in range(board_size):
     for col in range(board_size):
         if (row + col) % 2 == 1:
             if row < 3:
-                checkers[(row, col)] = (RED, "Dawn")
+                checkers[(row, col)] = figures.Figure(RED, "Dawn", row, col)
             elif row > 4:
-                checkers[(row, col)] = (BLUE , "UP")
+                checkers[(row, col)] = figures.Figure(BLUE, "UP", row, col)
 running = True
 posible_moves = []
+last_move = ((-1, -1), (-1, -1))
 while running:
     # Handle events
     for event in pygame.event.get():
@@ -136,22 +153,27 @@ while running:
     
     for row in range(board_size):
         for col in range(board_size):
-            if (row + col) % 2 == 0:
+            if (row, col) == last_move[0]:
+                pygame.draw.rect(window, Purple, (col * square_size, row * square_size, square_size, square_size))
+            elif (row, col) == last_move[1]:
+                pygame.draw.rect(window, Purple, (col * square_size, row * square_size, square_size, square_size))
+            elif (row + col) % 2 == 0:
                 pygame.draw.rect(window, WHITE, (col * square_size, row * square_size, square_size, square_size))
 
             else:
                 pygame.draw.rect(window, BLACK, (col * square_size, row * square_size, square_size, square_size))
     for key in checkers:
         row, col = key
-        color = checkers[key][0]
-        type = checkers[key][1]
+        color = checkers[key].color
+        type = checkers[key].movment
         if type != "KING":
             pygame.draw.circle(window, color, (col * square_size + square_size // 2, row * square_size + square_size // 2), square_size // 2 - 10)  
         else:
             pygame.draw.circle(window, color, (col * square_size + square_size // 2, row * square_size + square_size // 2), square_size // 2 - 10)  
             pygame.draw.circle(window, GREY, (col * square_size + square_size // 2, row * square_size + square_size // 2), square_size // 2 - 40)
+    
     ##Check for mouse click eventx
-
+    
 
     for moves in posible_moves:
         row, col = moves[0]
@@ -162,8 +184,8 @@ while running:
         col = x // square_size
         if (row, col) in checkers:
             # Get the selected checker
-            if checkers[(row, col)][0] == move:
-                selected_checker = (checkers[(row, col)],row, col)
+            if checkers[(row, col)].color == move and move != RED:
+                selected_checker = checkers[(row, col)]
                 posible_moves = all_posible_moves(selected_checker, checkers)
         if selected_checker:
             for moves in posible_moves:
@@ -172,12 +194,17 @@ while running:
                         for eaten in moves[1]:
                             if eaten in checkers:
                                 del checkers[eaten]
-                    if row == 0 and selected_checker[0][1] == "UP" or row == 7 and selected_checker[0][1] == "Dawn":
-                        checkers[(row, col)] = (selected_checker[0][0], "KING")
+                    if row == 0 and selected_checker.movment == "UP" or row == 7 and selected_checker.movment == "Dawn":
+                        checkers[(row, col)] = selected_checker
+                        checkers[(row, col)].make_king()        
                     else:
-                        checkers[(row, col)] = selected_checker[0]
+                        checkers[(row, col)] = selected_checker
+                    before_row, before_col = selected_checker.row, selected_checker.col
                     
-                    del checkers[(selected_checker[1], selected_checker[2])]
+                    selected_checker.row = row
+                    selected_checker.col = col
+                    
+                    del checkers[(before_row, before_col)]
                     selected_checker = None
                     posible_moves = []
                     if move == RED:
@@ -185,5 +212,21 @@ while running:
                     else:
                         move = RED 
     pygame.display.update()
+    if move == RED:
+        selected_checker = None
+        move_predicted = next_move.predict_next_move(checkers)
+        if move_predicted:
+            checkers[move_predicted[0][0]] = checkers[move_predicted[1]]
+            checkers[move_predicted[0][0]].row, checkers[move_predicted[0][0]].col = move_predicted[0][0]
+            if checkers[move_predicted[0][0]].row == 7:
+                checkers[move_predicted[0][0]].make_king()
+            print("Sa polja", move_predicted[1], "na polje", move_predicted[0][0])
+            last_move = (move_predicted[1], move_predicted[0][0])
+            del checkers[move_predicted[1]]
+            if move_predicted[0][1]:
+                for eaten in move_predicted[0][1]:
+                    if eaten in checkers:
+                        del checkers[eaten]
+        move = BLUE
     # Quit the game
 pygame.quit()
