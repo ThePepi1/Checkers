@@ -20,6 +20,23 @@ class Que:
     def size(self):
         return len(self.queue)
 
+def VariableDeepth(reds,blues):
+    lenght = 0
+    for key in reds.keys():
+        if reds[key].movment == "KING":
+            lenght += 10
+        else:
+            lenght += 2
+    for key in blues.keys():
+        if blues[key].movment == "KING":
+            lenght += 10
+        else:
+            lenght += 2
+    if lenght < 30:
+        return 6
+    else:
+        return 5
+
 
 
 
@@ -29,19 +46,19 @@ def predict_next_move(state):
     reds, blues = generate_reds(state)
     best_move = None
     best_score = -100000
+    depth = VariableDeepth(reds,blues)
     for moves in generate_next_move(reds,state):
-        score = predict_next_move_tree(state, 5, moves, reds, blues,False, best_score, 100000)
+        score = predict_next_move_tree(state, VariableDeepth(reds,blues), moves, reds, blues,False, best_score, 100000)
         if score > best_score:
             best_score = score
             best_move = moves
-    print("Best move", best_move)
-    print("_________________________")
+    #print("Best move", best_move)
+    #print("_________________________")
     return best_move
 
         
 def predict_next_move_tree(state, depth, last_move, played, playing,minmax, alpha, beta):
-    if depth == 0:
-        return evaluate(played,playing)
+
     played[last_move[0][0]] = played[last_move[1]]
     del played[last_move[1]]
     state[last_move[0][0]] = state[last_move[1]]
@@ -60,6 +77,35 @@ def predict_next_move_tree(state, depth, last_move, played, playing,minmax, alph
             figures_removed.append((figures, state[figures]))
             del state[figures]
             del playing[figures]
+    if depth == 0:
+        score =  evaluate(played,playing)
+        for cordinates , figures in figures_removed:
+            state[cordinates] = figures
+            playing[cordinates] = state[cordinates]
+        played[last_move[1]] = played[last_move[0][0]]
+        del played[last_move[0][0]]
+        state[last_move[1]] = state[last_move[0][0]]
+        del state[last_move[0][0]]
+        if promoted:
+            state[last_move[1]].Demote()
+        state[last_move[1]].row = last_move[1][0]
+        state[last_move[1]].col = last_move[1][1]
+        return score
+    ending = game_ended(played, playing,minmax)
+    if  ending != 0:
+        for cordinates , figures in figures_removed:
+            state[cordinates] = figures
+            playing[cordinates] = state[cordinates]
+        played[last_move[1]] = played[last_move[0][0]]
+        del played[last_move[0][0]]
+        state[last_move[1]] = state[last_move[0][0]]
+        del state[last_move[0][0]]
+        if promoted:
+            state[last_move[1]].Demote()
+        state[last_move[1]].row = last_move[1][0]
+        state[last_move[1]].col = last_move[1][1]
+        return ending
+    
     best_move = None
     best_score = -100000
     if not minmax:
@@ -90,7 +136,10 @@ def predict_next_move_tree(state, depth, last_move, played, playing,minmax, alph
         state[last_move[1]].Demote()
     state[last_move[1]].row = last_move[1][0]
     state[last_move[1]].col = last_move[1][1]
+    if abs(best_score) == 100000:
+        return 0
     return best_score
+    
 
 
 
@@ -213,25 +262,37 @@ def all_posible_moves(selected_checker, checkers):
                 cord, eaten = que.dequeue()
                 start_row, start_col = cord                     
                 been_to[(start_row, start_col)] = True
-                if (start_row - 2, start_col - 2) not in checkers and (start_row - 1, start_col - 1) in checkers and checkers[(start_row - 1, start_col - 1)].color != RED:
+                if (start_row - 2, start_col - 2) not in checkers and (start_row - 1, start_col - 1) in checkers and checkers[(start_row - 1, start_col - 1)].color != color:
                     if not been_to.get((start_row - 2, start_col - 2)):
                         if not Outside(start_row - 2, start_col - 2):
                             moves.append(((start_row - 2, start_col - 2),eaten + [(start_row - 1, start_col - 1)]))
                             que.append(((start_row - 2, start_col - 2),eaten + [(start_row - 1, start_col - 1)]))
-                if (start_row - 2, start_col + 2) not in checkers and (start_row - 1, start_col + 1) in checkers and checkers[(start_row - 1, start_col + 1)].color != RED:
+                if (start_row - 2, start_col + 2) not in checkers and (start_row - 1, start_col + 1) in checkers and checkers[(start_row - 1, start_col + 1)].color != color:
                     if not been_to.get((start_row - 2, start_col + 2)):
                         if not Outside(start_row - 2, start_col + 2):
                             moves.append(((start_row - 2, start_col + 2), eaten + [(start_row - 1, start_col + 1)]))
                             que.append(((start_row - 2, start_col + 2), eaten + [(start_row - 1, start_col + 1)]))
-                if (start_row + 2, start_col - 2) not in checkers and (start_row + 1, start_col - 1) in checkers and checkers[(start_row + 1, start_col - 1)].color != RED:
+                if (start_row + 2, start_col - 2) not in checkers and (start_row + 1, start_col - 1) in checkers and checkers[(start_row + 1, start_col - 1)].color != color:
                     if not been_to.get((start_row + 2, start_col - 2)):
                         if not Outside(start_row + 2, start_col - 2):
                             moves.append(((start_row + 2, start_col - 2), eaten + [(start_row + 1, start_col - 1)]))
                             que.append(((start_row + 2, start_col - 2), eaten + [(start_row + 1, start_col - 1)]))
-                if (start_row + 2, start_col + 2) not in checkers and (start_row + 1, start_col + 1) in checkers and checkers[(start_row + 1, start_col + 1)].color != RED:
+                if (start_row + 2, start_col + 2) not in checkers and (start_row + 1, start_col + 1) in checkers and checkers[(start_row + 1, start_col + 1)].color != color:
                     if not been_to.get((start_row + 2, start_col + 2)):    
                         if not Outside(start_row + 2, start_col + 2):
                             moves.append(((start_row + 2, start_col + 2), eaten + [(start_row + 1, start_col + 1)]))
                             que.append(((start_row + 2, start_col + 2), eaten + [(start_row + 1, start_col + 1)]))
     return moves
 
+def game_ended(reds , blues,first):
+    score = 0
+    if reds == {}:
+        score = 1000
+    if blues == {}:
+        score = 1000 
+    
+    if(not first):
+        return score
+    else:
+        return -1 * score
+    
