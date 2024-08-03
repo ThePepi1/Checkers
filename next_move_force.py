@@ -3,7 +3,7 @@ import time
 hash = None
 def init():
     global hash
-    hash = serialize.DictionarySerializer("hash_values.txt")
+    hash = serialize.DictionarySerializer('force_hash_values.txt')
     hash.load_from_file()
 
 
@@ -70,7 +70,7 @@ def predict_next_move(state):
         if score > best_score:
             best_score = score
             best_move = moves
-    print(time.time() - time_started)
+    print(time.time())
     #print("Best move", best_move)
     #print("_________________________")
     hash.add(s1, best_move)
@@ -208,16 +208,30 @@ def generate_reds(state):
     return reds, blues
 def generate_next_move(red,state):
     red_figures = red.copy()
+    moves_not_eating = []
+    moves_eating = []
+
     for figure in red_figures:
-        moves = all_posible_moves(red_figures[figure], state)
-        for move in moves: 
-            yield move , figure
+        moves , eating_moves = all_posible_moves(red[figure], state)
+        moves_not_eating += [(move, figure) for move in moves]
+        if eating_moves != []:
+            moves_eating += [(move, figure) for move in eating_moves]
+
+    if moves_eating != []:
+        for move in moves_eating:
+            yield move
+    else:
+        for move in moves_not_eating:
+            yield move
+
 def all_posible_moves(selected_checker, checkers):
     moves = []
+    moves_eating = []
     if selected_checker:
         color, row, col = selected_checker.color, selected_checker.row, selected_checker.col
         movment = selected_checker.movment
-        if movment == "UP":       # Check if the move is diagonal and forward
+        if movment == "UP":
+                # Check if the move is diagonal and forward
             if (row - 1, col - 1) not in checkers:
                 if not Outside(row - 1, col - 1):
                     moves.append(((row - 1, col - 1),None))
@@ -232,13 +246,12 @@ def all_posible_moves(selected_checker, checkers):
                 start_row, start_col = cord      
                 if (start_row - 2, start_col - 2) not in checkers and (start_row - 1, start_col - 1) in checkers and checkers[(start_row - 1, start_col - 1)].color != color:
                     if not Outside(start_row - 2, start_col - 2):
-                        moves.append(((start_row - 2, start_col - 2),eaten + [(start_row - 1, start_col - 1)]))
+                        moves_eating.append(((start_row - 2, start_col - 2),eaten + [(start_row - 1, start_col - 1)]))
                         que.append(((start_row - 2, start_col - 2),eaten + [(start_row - 1, start_col - 1)]))
                 if (start_row - 2, start_col + 2) not in checkers and (start_row - 1, start_col + 1) in checkers and checkers[(start_row - 1, start_col + 1)].color != color:
                     if not Outside(start_row - 2, start_col + 2):
-                        moves.append(((start_row - 2, start_col + 2), eaten + [(start_row - 1, start_col + 1)]))
+                        moves_eating.append(((start_row - 2, start_col + 2), eaten + [(start_row - 1, start_col + 1)]))
                         que.append(((start_row - 2, start_col + 2), eaten + [(start_row - 1, start_col + 1)]))
-                # Check if the move is diagonal and forward
         elif movment == "Dawn":
                 # Check if the move is diagonal and forward
             if (row + 1, col - 1) not in checkers:
@@ -247,26 +260,27 @@ def all_posible_moves(selected_checker, checkers):
             if (row + 1, col + 1) not in checkers:
                 if not Outside(row + 1, col + 1):
                     moves.append(((row + 1, col + 1),None))
+                
             # Check for possible captures
             que= Que()
             que.append(((row, col),[]))
             while(not que.is_empty()):
                 cord, eaten = que.dequeue()
                 start_row, start_col = cord
-                if (start_row + 2, start_col - 2) not in checkers and (start_row + 1, start_col - 1) in checkers and checkers[(start_row + 1, start_col - 1)].color == BLUE:
+                if (start_row + 2, start_col - 2) not in checkers and (start_row + 1, start_col - 1) in checkers and checkers[(start_row + 1, start_col - 1)].color != color:
                     if not Outside(start_row + 2, start_col - 2):
-                        moves.append(((start_row + 2, start_col - 2), eaten + [(start_row + 1, start_col - 1)]))
+                        moves_eating.append(((start_row + 2, start_col - 2), eaten + [(start_row + 1, start_col - 1)]))
                         que.append(((start_row + 2, start_col - 2), eaten + [(start_row + 1, start_col - 1)]))
-                if (start_row + 2, start_col + 2) not in checkers and (start_row + 1, start_col + 1) in checkers and checkers[(start_row + 1, start_col + 1)].color == BLUE:
+                if (start_row + 2, start_col + 2) not in checkers and (start_row + 1, start_col + 1) in checkers and checkers[(start_row + 1, start_col + 1)].color != color:
                     if not Outside(start_row + 2, start_col + 2):
-                        moves.append(((start_row + 2, start_col + 2), eaten + [(start_row + 1, start_col + 1)]))
+                        moves_eating.append(((start_row + 2, start_col + 2), eaten + [(start_row + 1, start_col + 1)]))
                         que.append(((start_row + 2, start_col + 2), eaten + [(start_row + 1, start_col + 1)]))
         elif movment == "KING":
             if (row - 1, col - 1) not in checkers:
                 if not Outside(row - 1, col - 1):
                     moves.append(((row - 1, col - 1),None))
             if (row - 1, col + 1) not in checkers:
-                if not Outside(row - 1, col + 1): 
+                if not Outside(row - 1, col + 1):
                     moves.append(((row - 1, col + 1),None))
             if (row + 1, col - 1) not in checkers:
                 if not Outside(row + 1, col - 1):
@@ -286,24 +300,24 @@ def all_posible_moves(selected_checker, checkers):
                 if (start_row - 2, start_col - 2) not in checkers and (start_row - 1, start_col - 1) in checkers and checkers[(start_row - 1, start_col - 1)].color != color:
                     if not been_to.get((start_row - 2, start_col - 2)):
                         if not Outside(start_row - 2, start_col - 2):
-                            moves.append(((start_row - 2, start_col - 2),eaten + [(start_row - 1, start_col - 1)]))
+                            moves_eating.append(((start_row - 2, start_col - 2),eaten + [(start_row - 1, start_col - 1)]))
                             que.append(((start_row - 2, start_col - 2),eaten + [(start_row - 1, start_col - 1)]))
                 if (start_row - 2, start_col + 2) not in checkers and (start_row - 1, start_col + 1) in checkers and checkers[(start_row - 1, start_col + 1)].color != color:
                     if not been_to.get((start_row - 2, start_col + 2)):
                         if not Outside(start_row - 2, start_col + 2):
-                            moves.append(((start_row - 2, start_col + 2), eaten + [(start_row - 1, start_col + 1)]))
+                            moves_eating.append(((start_row - 2, start_col + 2), eaten + [(start_row - 1, start_col + 1)]))
                             que.append(((start_row - 2, start_col + 2), eaten + [(start_row - 1, start_col + 1)]))
                 if (start_row + 2, start_col - 2) not in checkers and (start_row + 1, start_col - 1) in checkers and checkers[(start_row + 1, start_col - 1)].color != color:
                     if not been_to.get((start_row + 2, start_col - 2)):
                         if not Outside(start_row + 2, start_col - 2):
-                            moves.append(((start_row + 2, start_col - 2), eaten + [(start_row + 1, start_col - 1)]))
+                            moves_eating.append(((start_row + 2, start_col - 2), eaten + [(start_row + 1, start_col - 1)]))
                             que.append(((start_row + 2, start_col - 2), eaten + [(start_row + 1, start_col - 1)]))
                 if (start_row + 2, start_col + 2) not in checkers and (start_row + 1, start_col + 1) in checkers and checkers[(start_row + 1, start_col + 1)].color != color:
                     if not been_to.get((start_row + 2, start_col + 2)):    
                         if not Outside(start_row + 2, start_col + 2):
-                            moves.append(((start_row + 2, start_col + 2), eaten + [(start_row + 1, start_col + 1)]))
+                            moves_eating.append(((start_row + 2, start_col + 2), eaten + [(start_row + 1, start_col + 1)]))
                             que.append(((start_row + 2, start_col + 2), eaten + [(start_row + 1, start_col + 1)]))
-    return moves
+    return moves, moves_eating
 
 def game_ended(reds , blues,first):
     score = 0

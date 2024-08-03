@@ -1,4 +1,4 @@
-from game import start_game
+from game_force_move import start_game
 import pygame
 
 pygame.init()
